@@ -96,7 +96,7 @@ merge_meta(Msg, Meta0, Config) ->
     maps:merge(Msg, Meta2).
 
 encode(Data, Config) ->
-    Json = jsx:encode(Data),
+    Json = jiffy:encode(Data, []),
     case new_line(Config) of
         true -> [Json, new_line_type(Config)];
         false -> Json
@@ -174,7 +174,7 @@ meta_with(Meta, _ConfigNotPresent) ->
 -include_lib("eunit/include/eunit.hrl").
 
 -define(assertJSONEqual(Expected, Actual),
-    ?assertEqual(jsx:decode(Expected, [return_maps]), jsx:decode(Actual, [return_maps]))
+    ?assertEqual(jiffy:decode(Expected, [return_maps]), jiffy:decode(Actual, [return_maps]))
 ).
 
 format_test() ->
@@ -277,7 +277,7 @@ meta_without_test() ->
             <<"level">> => <<"info">>,
             <<"secret">> => <<"xyz">>
         },
-        jsx:decode(format(Error, #{}), [return_maps])
+        jiffy:decode(format(Error, #{}), [return_maps])
     ),
     Config2 = #{meta_without => [secret]},
     ?assertEqual(
@@ -285,7 +285,7 @@ meta_without_test() ->
             <<"answer">> => 42,
             <<"level">> => <<"info">>
         },
-        jsx:decode(format(Error, Config2), [return_maps])
+        jiffy:decode(format(Error, Config2), [return_maps])
     ),
     ok.
 
@@ -301,7 +301,7 @@ meta_with_test() ->
             <<"level">> => <<"info">>,
             <<"secret">> => <<"xyz">>
         },
-        jsx:decode(format(Error, #{}), [return_maps])
+        jiffy:decode(format(Error, #{}), [return_maps])
     ),
     Config2 = #{meta_with => [level]},
     ?assertEqual(
@@ -309,14 +309,14 @@ meta_with_test() ->
             <<"answer">> => 42,
             <<"level">> => <<"info">>
         },
-        jsx:decode(format(Error, Config2), [return_maps])
+        jiffy:decode(format(Error, Config2), [return_maps])
     ),
     ok.
 
 newline_test() ->
     ConfigDefault = #{new_line => true},
     ?assertEqual(
-        [<<"{\"level\":\"alert\",\"text\":\"derp\"}">>, <<"\n">>],
+        [<<"{\"text\":\"derp\",\"level\":\"alert\"}">>, <<"\n">>],
         format(#{level => alert, msg => {string, "derp"}, meta => #{}}, ConfigDefault)
     ),
     ConfigCRLF = #{
@@ -324,7 +324,7 @@ newline_test() ->
         new_line => true
     },
     ?assertEqual(
-        [<<"{\"level\":\"alert\",\"text\":\"derp\"}">>, <<"\r\n">>],
+        [<<"{\"text\":\"derp\",\"level\":\"alert\"}">>, <<"\r\n">>],
         format(#{level => alert, msg => {string, "derp"}, meta => #{}}, ConfigCRLF)
     ).
 
